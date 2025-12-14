@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin-checker | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- ADMIN PANEL CSS --- */
+        :root { --bg-dark: #101014; --sidebar-bg: #1a1a24; --card-bg: #22222e; --accent-cyan: #00e5ff; --accent-orange: #ff9100; --accent-pink: #f50057; --text-main: #ffffff; --text-muted: #8b8b9a; --transition: all 0.3s ease; }
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
+        .sidebar { width: 280px; background-color: var(--sidebar-bg); height: 100%; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.05); transition: var(--transition); z-index: 1000; }
+        .logo-section { padding: 25px; display: flex; align-items: center; gap: 15px; font-size: 1.2rem; font-weight: 600; color: #fff; }
+        .logo-icon { color: var(--accent-cyan); font-size: 1.5rem; }
+        .nav-menu { flex: 1; padding: 0 15px; list-style: none; margin-top: 20px; }
+        .nav-item { margin-bottom: 10px; cursor: pointer; padding: 15px 20px; border-radius: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 15px; font-weight: 500; transition: var(--transition); }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(0, 229, 255, 0.15), transparent); color: var(--accent-cyan); border-left: 3px solid var(--accent-cyan); box-shadow: -5px 0 15px rgba(0, 229, 255, 0.1); }
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .top-bar { height: 70px; padding: 0 25px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-dark); }
+        .menu-toggle { font-size: 1.5rem; color: #fff; cursor: pointer; background: none; border: none; }
+        .header-title { font-size: 1.1rem; font-weight: 500; }
+        .avatar-circle { width: 40px; height: 40px; border-radius: 50%; background: #81c784; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+        .content-scroll { padding: 25px; overflow-y: auto; height: 100%; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h2 { font-size: 1.8rem; font-weight: 600; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); border-radius: 16px; padding: 25px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .stat-card.glass { border-bottom: 4px solid var(--accent-cyan); }
+        .stat-card.battery { border-bottom: 4px solid var(--accent-orange); }
+        .stat-card.cover { border-bottom: 4px solid var(--accent-pink); }
+        .card-label { font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 10px; }
+        .card-number { font-size: 2.5rem; font-weight: 700; color: #fff; }
+        .bg-icon { position: absolute; right: -10px; top: 10px; font-size: 6rem; opacity: 0.05; transform: rotate(15deg); }
+        .section-view { display: none; animation: fadeIn 0.4s ease; }
+        .section-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; color: var(--text-muted); padding: 10px; border-bottom: 1px solid #333; font-size: 0.8rem; }
+        td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .add-btn { background: var(--accent-cyan); color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; float: right; cursor: pointer; transition: background 0.3s; }
+        .add-btn:hover { opacity: 0.9; }
+        @media (max-width: 768px) { .sidebar { position: fixed; left: -280px; top: 0; height: 100%; box-shadow: 10px 0 30px rgba(0,0,0,0.5); } .sidebar.active { left: 0; } .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 900; display: none; } .overlay.active { display: block; } }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        .modal-content { background: #2c2f40; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: var(--text-muted); margin-bottom: 5px; }
+        .form-control { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; transition: border-color 0.3s; }
+        .form-control:focus { border-color: var(--accent-cyan); }
+        .btn-submit { width: 100%; padding: 10px; background: var(--accent-cyan); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+        .btn-submit:hover { background: #00b8d4; }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo-section">
+            <i class="fas fa-cube logo-icon"></i>
+            <span>Admin-checker</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></li>
+            <li class="nav-item" onclick="switchTab('glass', this)"><i class="fas fa-shield-alt"></i> <span>Tempered Glass</span></li>
+            <li class="nav-item" onclick="switchTab('battery', this)"><i class="fas fa-bolt"></i> <span>Battery Stock</span></li>
+            <li class="nav-item" onclick="switchTab('cover', this)"><i class="fas fa-mobile"></i> <span>Back Covers</span></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <div class="header-title">Admin-checker 
+                    <a href="index.html" style="font-size:0.8rem; margin-left:10px; color:var(--accent-pink); text-decoration:none;">
+                        <i class="fas fa-sign-out-alt"></i> Go to User Panel
+                    </a>
+                </div>
+            </div>
+            <div class="avatar-circle">RB</div>
+        </div>
+
+        <div class="content-scroll">
+            
+            <div id="dashboard" class="section-view active">
+                <div class="page-header"><h2>Dashboard <span style="color: var(--accent-cyan);">Overview</span></h2></div>
+                <div class="stats-grid">
+                    <div class="stat-card glass"><i class="fas fa-shield-alt bg-icon"></i><div class="card-label">Glass Codes</div><div class="card-number" id="dashGlassCount">0</div></div>
+                    <div class="stat-card battery"><i class="fas fa-bolt bg-icon"></i><div class="card-label">Battery Codes</div><div class="card-number" id="dashBatteryCount">0</div></div>
+                    <div class="stat-card cover"><i class="fas fa-mobile-alt bg-icon"></i><div class="card-label">Cover Codes</div><div class="card-number" id="dashCoverCount">0</div></div>
+                </div>
+            </div>
+
+            <div id="glass" class="section-view">
+                <div class="page-header"><h2>Manage <span style="color: var(--accent-cyan);">Tempered Glass</span></h2></div>
+                <div class="stat-card">
+                    <button class="add-btn" onclick="openModal('glass')"><i class="fas fa-plus"></i> Add New</button>
+                    <h3>Glass Inventory</h3>
+                    <table id="glassTable"><thead><tr><th>Code</th><th>Models</th><th>Action</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+
+            <div id="battery" class="section-view">
+                <div class="page-header"><h2>Manage <span style="color: var(--accent-orange);">Battery Stock</span></h2></div>
+                <div class="stat-card">
+                    <button class="add-btn" style="background: var(--accent-orange);" onclick="openModal('battery')">Add New</button>
+                    <h3>Battery Inventory</h3>
+                    <table id="batteryTable"><thead><tr><th>Code</th><th>Device</th><th>Action</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+
+             <div id="cover" class="section-view">
+                <div class="page-header"><h2>Manage <span style="color: var(--accent-pink);">Back Covers</span></h2></div>
+                <div class="stat-card">
+                    <button class="add-btn" style="background: var(--accent-pink); color: white;" onclick="openModal('cover')">Add New</button>
+                    <h3>Cover Inventory</h3>
+                    <table id="coverTable"><thead><tr><th>Code</th><th>Model</th><th>Action</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:20px;">Add Item</h3>
+            <form id="addForm">
+                <input type="hidden" id="modalCategory">
+                <div class="form-group"><label>Code (e.g., K-001)</label><input type="text" id="inputCode" class="form-control" required></div>
+                <div class="form-group"><label>Models / Description (e.g., iPhone 15, 14, 13 Pro Max)</label><input type="text" id="inputModels" class="form-control" required></div>
+                <button type="submit" class="btn-submit">Save to Database</button>
+                <button type="button" class="btn-submit" style="background: #444; margin-top:5px;" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+      // NOTE: Replace your Firebase config here if it changes!
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+  apiKey: "AIzaSyD3ZSYJj-T7VRR9I_bRr0FDdrZtENf3YIY",
+  authDomain: "all-mobile-accessories.firebaseapp.com",
+  databaseURL: "https://all-mobile-accessories-default-rtdb.firebaseio.com",
+  projectId: "all-mobile-accessories",
+  storageBucket: "all-mobile-accessories.firebasestorage.app",
+  messagingSenderId: "688955020346",
+  appId: "1:688955020346:web:3e7db510dcc4e439bf1103",
+  measurementId: "G-NXSC3F16QC"
+};
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const colRef = collection(db, 'accessories');
+
+      // --- 1. READ DATA (Real-time) ---
+      // Real-time listener: Data update hote hi Admin Panel ki tables bhi update hongi
+      onSnapshot(colRef, (snapshot) => {
+          // Clear Tables
+          document.querySelector('#glassTable tbody').innerHTML = '';
+          document.querySelector('#batteryTable tbody').innerHTML = '';
+          document.querySelector('#coverTable tbody').innerHTML = '';
+          
+          let glassCount = 0, batteryCount = 0, coverCount = 0;
+
+          snapshot.docs.forEach(docSnap => {
+              const data = docSnap.data();
+              const id = docSnap.id;
+              
+              // Create Table Row HTML. window.deleteItem(id) call kar rahe hain.
+              const row = `
+                <tr>
+                    <td style="font-weight:bold; color: #fff;">${data.code}</td>
+                    <td>${data.models}</td>
+                    <td><i class="fas fa-trash" style="color: var(--accent-pink); cursor:pointer;" onclick="window.deleteItem('${id}')"></i></td>
+                </tr>
+              `;
+
+              // Sort into categories
+              if(data.category === 'glass') {
+                  document.querySelector('#glassTable tbody').innerHTML += row;
+                  glassCount++;
+              } else if(data.category === 'battery') {
+                  document.querySelector('#batteryTable tbody').innerHTML += row;
+                  batteryCount++;
+              } else if(data.category === 'cover') {
+                  document.querySelector('#coverTable tbody').innerHTML += row;
+                  coverCount++;
+              }
+          });
+
+          // Update Dashboard Counts
+          document.getElementById('dashGlassCount').innerText = glassCount;
+          document.getElementById('dashBatteryCount').innerText = batteryCount;
+          document.getElementById('dashCoverCount').innerText = coverCount;
+      });
+
+      // --- 2. ADD DATA ---
+      window.saveData = async function(category, code, models) {
+          try {
+              // Firebase mein naya document add karega
+              await addDoc(colRef, {
+                  category: category,
+                  code: code,
+                  models: models,
+                  createdAt: new Date().toISOString()
+              });
+              alert("Item Added Successfully!");
+              closeModal();
+          } catch(e) {
+              alert("Error adding item: " + e.message);
+          }
+      }
+
+      // --- 3. DELETE DATA (Crucial part for Real-time sync) ---
+      window.deleteItem = async function(id) {
+          if(confirm("Are you sure you want to delete this? It will be removed from User Panel instantly.")) {
+              try {
+                  // Firebase se document delete karega
+                  await deleteDoc(doc(db, "accessories", id));
+                  // onSnapshot listener ke karan User Panel apne aap update ho jayega
+                  alert("Item Deleted Successfully!");
+              } catch(e) {
+                  alert("Error deleting item: " + e.message);
+              }
+          }
+      }
+    </script>
+
+    <script>
+        // UI Helpers
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.querySelector('.overlay').classList.toggle('active'); }
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if(window.innerWidth < 768) toggleSidebar();
+        }
+
+        // Modal Logic
+        function openModal(category) {
+            document.getElementById('addModal').style.display = 'flex';
+            document.getElementById('modalCategory').value = category;
+        }
+        function closeModal() {
+            document.getElementById('addModal').style.display = 'none';
+            document.getElementById('addForm').reset();
+        }
+        
+        // Handle Form Submit
+        document.getElementById('addForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const cat = document.getElementById('modalCategory').value;
+            const code = document.getElementById('inputCode').value;
+            const models = document.getElementById('inputModels').value;
+            
+            // Call Firebase function defined in module script
+            if(window.saveData) {
+                window.saveData(cat, code, models);
+            } else {
+                alert("Firebase script not loaded yet!");
+            }
+        });
+    </script>
+</body>
+</html>
