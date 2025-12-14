@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Premium Admin Panel | Accessory Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #00bcd4; --secondary: #ff9800; --danger: #e91e63; --edit: #f1c40f;
+            --bg-body: #1e1e2d; --bg-panel: #27293d; --text-main: #ffffff; --text-muted: #8f9bb3;
+            --sidebar-width: 260px; --header-height: 75px; --radius: 15px;
+        }
+        * { box-sizing: border-box; outline: none; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) 1fr; grid-template-rows: var(--header-height) 1fr; grid-template-areas: "sidebar header" "sidebar main"; overflow: hidden; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #444b66; border-radius: 4px; }
+        .sidebar { grid-area: sidebar; background: linear-gradient(180deg, var(--bg-panel) 0%, #1a1c29 100%); display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-header { height: var(--header-height); display: flex; align-items: center; padding: 0 25px; font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+        .nav-link { display: flex; align-items: center; padding: 14px 20px; margin: 5px 15px; color: var(--text-muted); text-decoration: none; border-radius: 12px; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { background: rgba(0, 188, 212, 0.15); color: var(--primary); }
+        .top-header { grid-area: header; background: rgba(30, 30, 45, 0.9); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .main-content { grid-area: main; padding: 30px; overflow-y: auto; }
+        .content-section { display: none; animation: slideUp 0.5s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .card { background: var(--bg-panel); padding: 25px; border-radius: var(--radius); position: relative; border: 1px solid rgba(255,255,255,0.05); }
+        .card-value { font-size: 2.5rem; font-weight: 700; margin-top: 10px; }
+        .data-panel { background: var(--bg-panel); border-radius: var(--radius); padding: 25px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        th { text-align: left; color: var(--text-muted); padding: 15px; }
+        td { background: rgba(255,255,255,0.02); padding: 15px; }
+        .btn-add { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; float: right; }
+        
+        /* Action Buttons */
+        .action-btn { border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; margin-right: 5px; transition: 0.2s; }
+        .btn-delete { background: rgba(233, 30, 99, 0.15); color: var(--danger); }
+        .btn-delete:hover { background: var(--danger); color: white; }
+        .btn-edit { background: rgba(241, 196, 15, 0.15); color: var(--edit); }
+        .btn-edit:hover { background: var(--edit); color: black; }
+
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        .modal-content { background: #2c2f40; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; position: relative; }
+        .form-control { width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; margin-bottom: 15px; }
+        .btn-submit { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        @media (max-width: 768px) {
+            body { grid-template-columns: 1fr; grid-template-areas: "header" "main"; }
+            .sidebar { display: none; position: fixed; width: 250px; height: 100%; z-index: 999; }
+            .sidebar.active { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mySidebar">
+        <div class="sidebar-header"><i class="fas fa-cube" style="margin-right:10px;"></i> AccessoryHub</div>
+        <nav>
+            <a href="#" class="nav-link active" onclick="showSection('dashboard', this)"><i class="fas fa-chart-pie" style="margin-right:10px;"></i> Dashboard</a>
+            <a href="#" class="nav-link" onclick="showSection('glass', this)"><i class="fas fa-shield-alt" style="margin-right:10px;"></i> Tempered Glass</a>
+            <a href="#" class="nav-link" onclick="showSection('battery', this)"><i class="fas fa-bolt" style="margin-right:10px;"></i> Battery Stock</a>
+            <a href="#" class="nav-link" onclick="showSection('cover', this)"><i class="fas fa-mobile" style="margin-right:10px;"></i> Back Covers</a>
+        </nav>
+    </aside>
+
+    <!-- Header -->
+    <header class="top-header">
+        <button onclick="document.getElementById('mySidebar').classList.toggle('active')" style="background:none; border:none; color:white; font-size:1.5rem;"><i class="fas fa-bars"></i></button>
+        <div style="font-weight:bold;">Admin Panel</div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="content-section" style="display: block;">
+            <h1>Dashboard</h1>
+            <div class="card-container">
+                <div class="card" style="border-bottom: 4px solid var(--primary);">
+                    <div style="color:var(--text-muted)">Total Glass Codes</div>
+                    <div class="card-value" id="count-glass">0</div>
+                </div>
+                <div class="card" style="border-bottom: 4px solid var(--secondary);">
+                    <div style="color:var(--text-muted)">Total Battery Codes</div>
+                    <div class="card-value" id="count-battery">0</div>
+                </div>
+                <div class="card" style="border-bottom: 4px solid var(--danger);">
+                    <div style="color:var(--text-muted)">Total Cover Codes</div>
+                    <div class="card-value" id="count-cover">0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TEMPLATES FOR TABLES (GLass, Battery, Cover) -->
+        <div id="sections-container"></div>
+
+    </main>
+    
+    <!-- Add/Edit Modal -->
+    <div id="addModal" class="modal">
+      <div class="modal-content">
+        <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="closeModal()">&times;</span>
+        <h2 style="margin-top:0;" id="modalTitle">Add New Item</h2>
+        <form id="addForm">
+            <input type="hidden" id="modalCategory">
+            <!-- Hidden Input for Edit ID -->
+            <input type="hidden" id="editKey"> 
+            
+            <label>Code / Name</label>
+            <input type="text" id="inpCode" class="form-control" required placeholder="e.g. K-001">
+            <label>Description (Optional)</label>
+            <input type="text" id="inpDesc" class="form-control" placeholder="e.g. Big Notch">
+            <label>Compatible Models</label>
+            <textarea id="inpModels" class="form-control" rows="3" required placeholder="Realme C11, Oppo A31..."></textarea>
+            
+            <button type="submit" class="btn-submit" id="submitBtn">Save to Database</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        // Added 'update' to imports
+        import { getDatabase, ref, push, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAoubYkpdAIvkHFxiQQI_HUEkfRKlTsiX0",
+          authDomain: "mobileapo-8273e.firebaseapp.com",
+          databaseURL: "https://mobileapo-8273e-default-rtdb.firebaseio.com",
+          projectId: "mobileapo-8273e",
+          storageBucket: "mobileapo-8273e.firebasestorage.app",
+          messagingSenderId: "483263296236",
+          appId: "1:483263296236:web:ee7c3c48508b99ac922bc9",
+          measurementId: "G-GTHV522T6G"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const categories = ['glass', 'battery', 'cover'];
+
+        // 1. Initialize Tables UI
+        categories.forEach(cat => {
+            const sectionHTML = `
+                <section id="${cat}" class="content-section">
+                    <h1>Manage ${cat.toUpperCase()} <button class="btn-add" data-cat="${cat}">+ Add New</button></h1>
+                    <div class="data-panel">
+                        <table>
+                            <thead><tr><th>Code</th><th>Description</th><th>Models</th><th style="text-align:right;">Action</th></tr></thead>
+                            <tbody id="tbody-${cat}"></tbody>
+                        </table>
+                    </div>
+                </section>
+            `;
+            document.getElementById('sections-container').insertAdjacentHTML('beforeend', sectionHTML);
+        });
+
+        // 2. Real-time Data Listener (READ)
+        categories.forEach(cat => {
+            const dbRef = ref(db, 'accessories/' + cat);
+            onValue(dbRef, (snapshot) => {
+                const tbody = document.getElementById(`tbody-${cat}`);
+                const countDisplay = document.getElementById(`count-${cat}`);
+                tbody.innerHTML = "";
+                let count = 0;
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    count = Object.keys(data).length;
+                    
+                    Object.entries(data).forEach(([key, value]) => {
+                        // Data attributes for Edit function to read easily
+                        const row = `
+                            <tr>
+                                <td style="color:var(--primary); font-weight:600;">${value.code}</td>
+                                <td>${value.desc || '-'}</td>
+                                <td style="font-size:0.9rem; color:var(--text-muted);">${value.models}</td>
+                                <td style="text-align:right;">
+                                    <button class="action-btn btn-edit" 
+                                        data-key="${key}" 
+                                        data-cat="${cat}"
+                                        data-code="${value.code}" 
+                                        data-desc="${value.desc || ''}" 
+                                        data-models="${value.models}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn btn-delete" data-key="${key}" data-cat="${cat}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px;'>No data found. Add some!</td></tr>";
+                }
+                countDisplay.innerText = count;
+            });
+        });
+
+        // 3. Add / Update Data Function (WRITE)
+        document.getElementById('addForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const cat = document.getElementById('modalCategory').value;
+            const key = document.getElementById('editKey').value; // Get Hidden ID
+            
+            const payload = {
+                code: document.getElementById('inpCode').value,
+                desc: document.getElementById('inpDesc').value,
+                models: document.getElementById('inpModels').value,
+                timestamp: Date.now()
+            };
+
+            if (key) {
+                // --- UPDATE MODE ---
+                update(ref(db, `accessories/${cat}/${key}`), payload)
+                .then(() => {
+                    closeModal();
+                    // Optional: alert("Updated Successfully!");
+                })
+                .catch((err) => alert("Error: " + err.message));
+            } else {
+                // --- ADD NEW MODE ---
+                push(ref(db, 'accessories/' + cat), payload)
+                .then(() => {
+                    closeModal();
+                    // Optional: alert("Added Successfully!");
+                })
+                .catch((err) => alert("Error: " + err.message));
+            }
+        });
+
+        // 4. Handle Clicks (Add, Edit, Delete)
+        document.addEventListener('click', (e) => {
+            
+            // A. Open "Add New" Modal
+            if (e.target.classList.contains('btn-add')) {
+                const cat = e.target.getAttribute('data-cat');
+                resetModal(); // Clear form
+                document.getElementById('modalCategory').value = cat;
+                document.getElementById('modalTitle').innerText = "Add New Item";
+                document.getElementById('submitBtn').innerText = "Save to Database";
+                document.getElementById('addModal').style.display = 'flex';
+            }
+            
+            // B. Open "Edit" Modal
+            if (e.target.closest('.btn-edit')) {
+                const btn = e.target.closest('.btn-edit');
+                resetModal(); // Clear form first
+                
+                // Fill data from button attributes
+                document.getElementById('modalCategory').value = btn.getAttribute('data-cat');
+                document.getElementById('editKey').value = btn.getAttribute('data-key'); // Set ID
+                document.getElementById('inpCode').value = btn.getAttribute('data-code');
+                document.getElementById('inpDesc').value = btn.getAttribute('data-desc');
+                document.getElementById('inpModels').value = btn.getAttribute('data-models');
+                
+                // Change UI to Edit Mode
+                document.getElementById('modalTitle').innerText = "Edit Item";
+                document.getElementById('submitBtn').innerText = "Update Item";
+                document.getElementById('addModal').style.display = 'flex';
+            }
+
+            // C. Delete Item
+            if (e.target.closest('.btn-delete')) {
+                const btn = e.target.closest('.btn-delete');
+                const key = btn.getAttribute('data-key');
+                const cat = btn.getAttribute('data-cat');
+                
+                if(confirm("Are you sure you want to delete this?")) {
+                    remove(ref(db, `accessories/${cat}/${key}`));
+                }
+            }
+        });
+        
+        // Helper to clear form
+        window.resetModal = function() {
+            document.getElementById('addForm').reset();
+            document.getElementById('editKey').value = ""; // Clear ID
+        }
+
+        window.closeModal = function() {
+            document.getElementById('addModal').style.display = 'none';
+            resetModal();
+        }
+
+    </script>
+
+    <!-- Standard UI Logic -->
+    <script>
+        function showSection(id, btn) {
+            document.querySelectorAll('.content-section').forEach(el => el.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            if(window.innerWidth < 768) document.getElementById('mySidebar').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
